@@ -1,9 +1,9 @@
-import { PrismaClient } from '@prisma/client';
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('=== VIDAGE DE LA BASE DE DONNÉES ===\n');
+  console.log('=== VIDAGE DE LA BASE DE DONNÉES (PRODUCTION) ===\n');
 
   try {
     console.log('Suppression des cotations (market_prices)...');

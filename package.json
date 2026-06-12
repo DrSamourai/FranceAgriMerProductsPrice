@@ -11,7 +11,7 @@
     "prisma:migrate": "prisma db push",
     "test:tomate": "ts-node test-sync-tomate.ts",
     "test:all": "ts-node test-sync-all.ts",
-    "db:empty": "ts-node scripts/empty-db.ts",
+    "db:empty": "node scripts/empty-db.js",
     "sync:daily": "ts-node scripts/sync-daily.ts",
     "cron:daemon": "ts-node scripts/cron-daemon.ts"
   },
