@@ -6,7 +6,6 @@ async function main() {
   console.log('=== VIDAGE DE LA BASE DE DONNÉES ===\n');
 
   try {
-    // Delete from child-most tables first to satisfy foreign key constraints
     console.log('Suppression des cotations (market_prices)...');
     const pricesCount = await prisma.marketPrice.deleteMany();
     console.log(`-> ${pricesCount.count} cotations supprimées.`);
