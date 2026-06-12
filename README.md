@@ -66,6 +66,11 @@ La base de données PostgreSQL utilise le schéma suivant (géré via Prisma) :
   - `limit` (max `5000`) & `offset` pour paginer l'exportation des prix.
   - `dateFrom` / `dateTo` pour exporter uniquement les prix d'un intervalle de temps.
 
+### 6. Déclencheur de Synchronisation Sécurisé
+- **Endpoint** : `POST /api/rnm/sync`
+- **Description** : Déclenche la synchronisation globale des prix et produits en arrière-plan. Retourne immédiatement un code `202 Accepted` pour éviter les timeouts HTTP.
+- **Authentification** : Si la variable d'environnement `SYNC_TOKEN` est définie, vous devez fournir le jeton soit en paramètre d'URL `?token=VOTRE_JETON` soit dans le header HTTP `x-sync-token`.
+
 ---
 
 ## 🛠️ Commandes Locales Utiles
@@ -109,3 +114,46 @@ Ce dépôt est configuré pour être déployé en 1 clic sur **Coolify** grâce 
    - **Planification (Cron)** : `0 2 * * *`
    - **Commande** : `npm run sync:daily`
 4. Enregistrez. Coolify gérera l'exécution du script à l'intérieur du conteneur chaque nuit à 2h et conservera les rapports de synchronisation dans ses logs.
+
+---
+
+## 🎈 Déploiement sur Fly.io
+
+Le projet est préconfiguré pour **Fly.io** avec le fichier [fly.toml](file:///Users/paulbreton/Desktop/scrap/fly.toml).
+
+### Étape 1 : Connexion à Fly.io
+Installez l'outil `flyctl` puis connectez-vous :
+```bash
+fly auth login
+```
+
+### Étape 2 : Initialisation du projet
+Initialisez l'application sur Fly.io (choisissez de créer une base de données PostgreSQL si vous n'en avez pas déjà une externe) :
+```bash
+fly launch
+```
+*Remarque : Ne lancez pas le déploiement immédiat avant d'avoir configuré les variables secrètes.*
+
+### Étape 3 : Configuration des variables d'environnement
+Configurez la connexion PostgreSQL et définissez un jeton sécurisé pour déclencher la synchronisation à distance :
+```bash
+fly secrets set DATABASE_URL="votre_connection_string" DIRECT_URL="votre_connection_string" SYNC_TOKEN="un_mot_de_passe_impenetrable"
+```
+
+### Étape 4 : Déploiement
+Déployez l'application :
+```bash
+fly deploy
+```
+
+### Étape 5 : Planification de la synchronisation à 2h00 du matin
+Pour que l'application ne consomme pas vos ressources inutilement, Fly.io éteint automatiquement le serveur si personne ne l'utilise (`auto_stop_machines = true` dans `fly.toml`).
+
+Pour lancer la synchronisation sans forcer le serveur à rester allumé 24h/24 :
+1. Créez un compte gratuit sur un planificateur HTTP (ex: [cron-job.org](https://cron-job.org/)).
+2. Configurez une tâche planifiée pour s'exécuter tous les jours à **2h00 du matin**.
+3. Définissez la requête de la tâche sur :
+   - **URL** : `https://nom-de-votre-app.fly.dev/api/rnm/sync?token=VOTRE_SYNC_TOKEN`
+   - **Méthode** : `POST`
+4. **Pourquoi c'est idéal ?** L'appel HTTP de 2h00 va réveiller automatiquement votre conteneur sur Fly.io, démarrer la synchronisation des prix en arrière-plan, puis le conteneur s'éteindra de lui-même après quelques minutes d'inactivité pour préserver vos crédits gratuits Fly.io !
+
