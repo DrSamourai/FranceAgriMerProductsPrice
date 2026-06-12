@@ -2,7 +2,7 @@
 
 # --- Étape 1 : Installation des dépendances ---
 FROM node:20-alpine AS deps
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -14,6 +14,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# S'assurer que le dossier public existe pour éviter les erreurs de copie Next.js
+RUN mkdir -p public
+
 # Générer le client Prisma
 RUN npx prisma generate
 
@@ -23,6 +26,7 @@ RUN npm run build
 
 # --- Étape 3 : Image finale de production ---
 FROM node:20-alpine AS runner
+RUN apk add --no-cache openssl
 WORKDIR /app
 
 ENV NODE_ENV=production
