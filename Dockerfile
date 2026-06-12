@@ -10,6 +10,8 @@ RUN npm ci
 
 # --- Étape 2 : Construction de l'application ---
 FROM node:20-alpine AS builder
+# Installer openssl ici pour que Prisma détecte OpenSSL 3.0 lors de la génération
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -17,7 +19,7 @@ COPY . .
 # S'assurer que le dossier public existe pour éviter les erreurs de copie Next.js
 RUN mkdir -p public
 
-# Générer le client Prisma
+# Générer le client Prisma avec la bonne version d'OpenSSL
 RUN npx prisma generate
 
 # Build Next.js
